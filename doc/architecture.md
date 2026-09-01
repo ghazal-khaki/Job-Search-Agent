@@ -3,50 +3,36 @@
 ## Proposed components
 
 ```text
-CLI or future web UI
-        |
-        v
-workflow orchestrator ---- model provider adapter
-        |                         |
-        |                         v
-        |                   tool selection and judgment
-        v
-application core
-   |        |          |
-   |        |          `---- evaluation recorder
-   |        `--------------- retrieval/embedding service
-   `------------------------ MCP client or shared MCP operations
-                                  |
-                                  v
-                         MCP job-store server
-                                  |
-                                  v
-                         SQLite + vector extension
+React/Vite web UI -> Fastify HTTP API -> application core -> SQLite + uploads
+                                             |
+future agent -> MCP client -> MCP server -----+
+      |                                      |
+      +-> model provider adapter             +-> retrieval/evaluation services
 ```
 
-The exact boundary between the orchestrator and MCP client needs prototyping. To demonstrate genuine MCP use, the orchestrator should consume the job-store server through an MCP client in at least one supported runtime path. Domain logic that must be shared can live in packages beneath both interfaces.
+The Stage 1 web path calls application services through the HTTP API. The exact boundary between the future orchestrator and MCP client still needs prototyping. To demonstrate genuine MCP use, the orchestrator should consume the job-store server through an MCP client in at least one supported runtime path. Domain logic shared by the HTTP and MCP transports lives in packages beneath both interfaces.
 
-## Proposed repository layout
+## Accepted Stage 1 repository layout
 
 ```text
 apps/
-|-- agent-cli/
-|-- mcp-server/
-`-- web/                 # later unless needed for the MVP demo
+|-- api/                 # Fastify HTTP API and local file handling
+`-- web/                 # React/Vite local tracker
 packages/
-|-- core/
 |-- contracts/
-|-- ingestion/
-|-- retrieval/
-|-- providers/
-|-- evaluation/
-`-- test-support/
-data/                    # ignored private working data
+|-- core/
+`-- db/                  # SQLite, Drizzle schema, and migrations
+data/                    # ignored local database and uploads
 fixtures/                # synthetic or licensed public test data
 doc/
 ```
 
-This layout is proposed, not yet frozen.
+This is a pnpm workspace without Turborepo for Stage 1. Future capabilities extend
+the layout instead of changing its boundaries: `apps/mcp-server` reuses the
+contracts, application services, and repositories; an agent application consumes
+the MCP interface; and retrieval, provider, evaluation, ingestion, configuration,
+and test-support packages are added only when their stages need them. See D-016 in
+[`decisions.md`](./decisions.md) for the complete tooling baseline and rationale.
 
 ## Agent design
 
@@ -121,9 +107,11 @@ Each chunk needs a stable source ID, text, document type, embedding model/versio
 
 ## Storage
 
-The application is local-first. SQLite is the leading Stage 1 persistence candidate because it can run as a single local file without Docker or a separate database process. MongoDB through Docker remains an option only if document flexibility clearly outweighs the operational cost. Browser-only storage such as IndexedDB may be useful for caching or offline UI behavior, but it should not be the primary system of record unless the project intentionally becomes frontend-only.
+The application is local-first. SQLite is the accepted Stage 1 persistence choice because it can run as a single local file without Docker or a separate database process. Drizzle owns the schema and checked-in SQL migrations. Browser-only storage such as IndexedDB may be useful for caching or offline UI behavior, but it is not the system of record.
 
-Before implementation, confirm backup/export behavior, file-upload storage, MCP access, vector retrieval needs, and whether the app must support multiple local users on the same machine.
+Uploaded document metadata lives in SQLite and file contents live under a configurable, ignored local data directory. The API owns those paths, enforces upload limits and allowed document types, and never accepts arbitrary client filesystem paths. Backup/export must account for both the SQLite file and upload directory.
+
+The initial backup/export contract must include both the database and upload directory. Vector retrieval details and whether multiple local users share one installation remain later design questions.
 
 ## Application tracking model
 
