@@ -12,6 +12,19 @@ Status labels: **MVP**, **Later**, and **Open**.
 - **MVP:** Detect likely duplicates without silently deleting either record.
 - **Later:** Add a source connector only where access and automation are permitted.
 
+### Source monitoring
+
+- **Later:** Let a user maintain a bounded watchlist of target employers and approved job sources.
+- **Later:** Prefer public ATS APIs/feeds and employer-approved structured sources over HTML scraping.
+- **Later:** Detect and record `new`, `changed`, `closed`, `unreachable`, and `parser_failed` source outcomes.
+- **Later:** Preserve source identifiers, canonical URLs, first/last-seen timestamps, content hashes, and fetch provenance.
+- **Later:** Evaluate only new or materially changed postings.
+- **Later:** Make schedules and request rates configurable per source.
+- **Later:** Quarantine malformed source changes instead of silently replacing good data.
+- **Later:** Support Apify as an optional connector runner without requiring it for local operation.
+- **Out of scope initially:** Comprehensive discovery and monitoring of all German companies.
+- **Out of scope without explicit authorization:** Automated access to services whose terms prohibit crawlers or scripts, including logged-in LinkedIn/XING workflows.
+
 ### Application tracking
 
 - **MVP:** Give each opportunity a lifecycle status separate from the agent's match recommendation.
